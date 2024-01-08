@@ -4,10 +4,11 @@ from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from .models import Income
 from .serializers import IncomeSerializer
+import logging
 
+logger = logging.getLogger(__name__)
 
 class IncomeListView(APIView):
     # all
@@ -20,6 +21,7 @@ class IncomeListView(APIView):
         serializer = IncomeSerializer(data=request.data)
         if serializer.is_valid():
             income_instance = serializer.save()
+            logger.info(f"New income created: {income_instance}")
             copy_request = request.data
             copy_request['id'] = income_instance.id
             channel_layer = get_channel_layer()
@@ -48,6 +50,7 @@ class IncomeDetailView(APIView):
 
     def delete(self, request, pk):
         income = self.get_object(pk)
+        logger.info(f"Income deleted: {income}")
         income.delete()
         channel_layer = get_channel_layer()
         message = {
@@ -60,6 +63,7 @@ class IncomeDetailView(APIView):
 
     def put(self, request, pk):
         income = self.get_object(pk)
+        logger.info(f"Income updated: {income}")
         serializer = IncomeSerializer(income, data=request.data)
         if serializer.is_valid():
             serializer.save()
